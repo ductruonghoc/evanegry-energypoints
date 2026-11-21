@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Điểm năng lượng 🦆</title>
+<style>
+:root{--y:#FFD84D;--y2:#FFF3B8;--bg:#FFFCEB;--ink:#5B4300;--card:#fff;--bad:#F08A5D;--good:#3DAA6D}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;min-height:100vh;background:radial-gradient(circle at 50% 30%,#fff 0,var(--bg) 70%);color:var(--ink);font-family:"Nunito","Segoe UI",system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;padding:20px 12px 40px}
+h1{font-size:18px;margin:0 0 4px;letter-spacing:.3px}
+.sub{font-size:12px;opacity:.6;margin-bottom:14px}
+.stage{position:relative;width:min(94vw,340px);aspect-ratio:1;margin:8px 0 18px}
+.core{position:absolute;left:50%;top:50%;width:150px;height:150px;transform:translate(-50%,-50%);border-radius:50%;background:var(--card);border:6px solid var(--y);box-shadow:0 0 0 10px var(--y2),0 10px 30px rgba(255,200,0,.35);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:transform .2s}
+.core.bump{transform:translate(-50%,-50%) scale(1.07)}
+.core svg{width:62px;height:62px;margin-top:-6px}
+.pts{font-size:44px;font-weight:900;line-height:1}
+.lbl{font-size:11px;opacity:.6;font-weight:700}
+.sat{position:absolute;width:78px;height:78px;transform:translate(-50%,-50%);border-radius:50%;border:3px solid var(--y);background:#fff;color:var(--ink);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;font:inherit;box-shadow:0 4px 0 var(--y);transition:transform .1s,box-shadow .1s}
+.sat:active{transform:translate(-50%,calc(-50% + 3px));box-shadow:0 1px 0 var(--y)}
+.sat .e{font-size:24px;line-height:1}.sat .t{font-size:11px;font-weight:800;margin-top:2px}
+.sat .d{font-size:11px;font-weight:900}
+.sat.minus .d{color:var(--bad)}.sat.plus .d{color:var(--good)}
+.sat:disabled{opacity:.35;box-shadow:none;cursor:not-allowed}
+.row{display:flex;gap:10px;align-items:center;margin-bottom:14px}
+.seg{display:flex;background:var(--y2);border-radius:99px;padding:4px}
+.seg button{border:0;background:none;padding:8px 16px;border-radius:99px;font:inherit;font-weight:800;color:var(--ink);cursor:pointer}
+.seg button.on{background:var(--y);box-shadow:0 2px 0 #E5B91F}
+.undo{border:2px dashed var(--y);background:none;border-radius:99px;padding:8px 14px;font:inherit;font-weight:700;color:var(--ink);cursor:pointer}
+.log{width:min(94vw,340px);background:#fff;border-radius:16px;padding:10px 14px;font-size:13px;border:2px solid var(--y2)}
+.log div{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dashed var(--y2)}
+.log div:last-child{border:0}
+.log .empty{opacity:.5;justify-content:center}
+.modal{position:fixed;inset:0;background:rgba(91,67,0,.35);display:none;align-items:center;justify-content:center;padding:20px;z-index:10}
+.modal.show{display:flex}
+.box{background:#fff;border:4px solid var(--y);border-radius:24px;padding:20px;width:min(100%,320px);text-align:center}
+.box h2{margin:0 0 12px;font-size:17px}
+.times{display:flex;gap:8px;align-items:center;justify-content:center}
+.times input{font:inherit;font-size:22px;font-weight:800;color:var(--ink);border:2px solid var(--y);border-radius:12px;padding:8px;width:120px;text-align:center;background:var(--bg)}
+.prev{margin:14px 0;font-weight:800;min-height:24px}
+.btns{display:flex;gap:10px;justify-content:center}
+.btns button{border:0;border-radius:99px;padding:10px 20px;font:inherit;font-weight:800;cursor:pointer;color:var(--ink)}
+.btns .ok{background:var(--y);box-shadow:0 3px 0 #E5B91F}.btns .no{background:var(--y2)}
+.btns .ok:disabled{opacity:.4}
+.status{font-size:11px;opacity:.5;margin-top:10px}
+</style>
+</head>
+<body>
+<h1>Điểm năng lượng</h1>
+<div class="sub" id="date"></div>
+
+<div class="stage" id="stage">
+  <div class="core" id="core">
+    <svg viewBox="0 0 100 100" id="duck"></svg>
+    <div class="pts" id="pts">–</div>
+    <div class="lbl">điểm năng lượng</div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="seg">
+    <button id="pHome" class="on">🏠 Ở nhà</button>
+    <button id="pOffice">🏢 Ở công ty</button>
+  </div>
+  <button class="undo" id="undo">↶ Hoàn tác</button>
+</div>
+
+<div class="log" id="log"></div>
+<div class="status" id="status"></div>
+
+<div class="modal" id="modal">
+  <div class="box">
+    <h2>😴 Ngủ từ mấy giờ đến mấy giờ?</h2>
+    <div class="times"><input type="time" id="sFrom" value="23:00"><span>–</span><input type="time" id="sTo" value="07:00"></div>
+    <div class="prev" id="sPrev"></div>
+    <div class="btns"><button class="no" id="sCancel">Huỷ</button><button class="ok" id="sOk">Lưu</button></div>
+  </div>
+</div>
+
+<script>
+// ====== CẤU HÌNH ======
+const API_URL = "https://script.google.com/macros/s/AKfycbzNLXTFLn_cr-LWugzKYw8DM94veVt-BPJeN8xkjBArkSnt0DknwH9YJkE9Jnnmt5Ex/exec"; // Dán URL Web App của Apps Script (kết thúc bằng /exec). Để trống = chạy thử, lưu tạm trên máy.
+const START = 10;   // Điểm đầu ngày (nếu đổi, đổi cả trong Code.gs)
+const RULES = {
+  task:       {e:"💻", t:"Làm task",     d:-1},
+  sleep:      {e:"😴", t:"Ngủ",          d:0}, // điểm tính theo giờ nhập: 3 điểm / 1h30
+  chat_home:  {e:"💬", t:"Đọc chat",     d:3},
+  chat_office:{e:"💬", t:"Đọc chat",     d:1},
+  game:       {e:"🎮", t:"Game/ Video",    d:3},
+};
+// =======================
+let place = "home", state = {points:START, log:[]};
+const $ = id => document.getElementById(id);
+const fmt = d => (d>0?"+":"")+d;
+
+function duck(mood){
+  const mouth = mood==="tired" ? '<path d="M44 66q6-4 12 0" stroke="#5B4300" stroke-width="2.5" fill="none" stroke-linecap="round"/>' : '';
+  const eye = mood==="tired"
+    ? '<path d="M33 46h8M59 46h8" stroke="#5B4300" stroke-width="3" stroke-linecap="round"/>'
+    : '<circle cx="37" cy="46" r="4.5" fill="#5B4300"/><circle cx="63" cy="46" r="4.5" fill="#5B4300"/><circle cx="38.5" cy="44.5" r="1.4" fill="#fff"/><circle cx="64.5" cy="44.5" r="1.4" fill="#fff"/>';
+  const beak = mood==="tired" ? '' : '<ellipse cx="50" cy="60" rx="12" ry="7" fill="#FF9F43"/>';
+  $("duck").innerHTML = '<path d="M50 8c6 0 9 5 8 9 6 1 10 5 10 5-4 0-7 0-9-1-4-4-14-4-18 0-2 1-5 1-9 1 0 0 4-4 10-5-1-4 2-9 8-9z" fill="#FFD84D" opacity="0"/>'
+    + '<circle cx="50" cy="52" r="38" fill="#FFD84D"/><ellipse cx="25" cy="58" rx="6" ry="4" fill="#FFB5A0" opacity=".6"/><ellipse cx="75" cy="58" rx="6" ry="4" fill="#FFB5A0" opacity=".6"/>'
+    + '<path d="M50 14c-3-6 2-10 6-8" stroke="#FFD84D" stroke-width="5" fill="none" stroke-linecap="round"/>'
+    + eye + beak + mouth;
+}
+
+function render(){
+  const p = state.points;
+  $("pts").textContent = p;
+  $("pts").style.color = p<=0 ? "var(--bad)" : "var(--ink)";
+  duck(p<=0 ? "tired" : "happy");
+  $("core").classList.add("bump"); setTimeout(()=>$("core").classList.remove("bump"),180);
+  const l = $("log");
+  l.innerHTML = state.log.length
+    ? state.log.slice().reverse().slice(0,6).map(r=>`<div><span>${r.time} · ${RULES[r.action]?.t||r.action}${r.note?" "+r.note:""}</span><b style="color:${r.delta>0?"var(--good)":"var(--bad)"}">${fmt(r.delta)}</b></div>`).join("")
+    : '<div class="empty">Hôm nay chưa có gì, vịt đang chờ 🦆</div>';
+}
+
+function buildSatellites(){
+  document.querySelectorAll(".sat").forEach(n=>n.remove());
+  const chatKey = place==="home" ? "chat_home" : "chat_office";
+  const items = [["task","task"],["sleep","sleep"],["chat",chatKey],["game","game"]]; // trên, phải, dưới, trái
+  items.forEach(([_,key],i)=>{
+    const r = RULES[key], a = (-90 + i*90) * Math.PI/180, R = 37;
+    const b = document.createElement("button");
+    b.className = "sat " + (r.d<0?"minus":"plus");
+    b.style.left = (50 + R*Math.cos(a)) + "%";
+    b.style.top  = (50 + R*Math.sin(a)) + "%";
+    b.innerHTML = `<span class="e">${r.e}</span><span class="t">${r.t}</span><span class="d">${key==="sleep" ? "hh:mm" : fmt(r.d)}</span>`;
+    if(key==="game" && place==="office"){ b.disabled = true; b.title="Chỉ chơi ở nhà"; }
+    b.onclick = key==="sleep" ? openSleep : () => act(key);
+    $("stage").appendChild(b);
+  });
+}
+
+// ====== Lưu trữ ======
+const nowStr = () => new Date().toLocaleTimeString("vi-VN",{hour:"2-digit",minute:"2-digit"});
+const todayKey = () => new Date().toISOString().slice(0,10);
+function localLoad(){
+  try{ const s = JSON.parse(localStorage.getItem("energy")||"null"); if(s && s.day===todayKey()) return s; }catch(e){}
+  return {day:todayKey(), points:START, log:[]};
+}
+function localSave(s){ try{ localStorage.setItem("energy", JSON.stringify({day:todayKey(), ...s})); }catch(e){} }
+
+async function api(body){
+  const res = await fetch(API_URL, body ? {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify(body)} : {});
+  return res.json();
+}
+function setStatus(t){ $("status").textContent = t; }
+
+async function act(action, extra){
+  const d = extra ? extra.delta : RULES[action].d;
+  // cập nhật ngay cho mượt
+  state = {points: state.points + d, log: [...state.log, {time:nowStr(), action, delta:d, note: extra ? extra.note : ""}]};
+  render();
+  if(!API_URL){ localSave(state); return; }
+  try{ state = await api({op:"add", action, ...(extra ? {from:extra.from, to:extra.to} : {})}); render(); setStatus("Đã lưu ✓"); }
+  catch(e){ setStatus("Lỗi kết nối, thử lại nhé"); }
+}
+async function undo(){
+  if(!state.log.length) return;
+  const last = state.log[state.log.length-1];
+  state = {points: state.points - last.delta, log: state.log.slice(0,-1)};
+  render();
+  if(!API_URL){ localSave(state); return; }
+  try{ state = await api({op:"undo"}); render(); setStatus("Đã hoàn tác ✓"); }
+  catch(e){ setStatus("Lỗi kết nối"); }
+}
+
+// ====== Ngủ: nhập giờ ======
+function sleepPts(from, to){
+  if(!from || !to) return null;
+  const m = x => { const [h,mi] = x.split(":").map(Number); return h*60+mi; };
+  const mins = (m(to) - m(from) + 1440) % 1440; // qua nửa đêm vẫn đúng
+  if(!mins) return null;
+  return {mins, pts: Math.round(mins/30)};      // 3 điểm / 90 phút = 1 điểm / 30 phút
+}
+function updateSleepPrev(){
+  const r = sleepPts($("sFrom").value, $("sTo").value);
+  $("sOk").disabled = !r;
+  $("sPrev").textContent = r ? `${Math.floor(r.mins/60)}h${String(r.mins%60).padStart(2,"0")} → +${r.pts} điểm` : "Nhập giờ hợp lệ nhé";
+}
+function openSleep(){
+  try{ $("sFrom").value = localStorage.getItem("sFrom") || "23:00"; $("sTo").value = localStorage.getItem("sTo") || "07:00"; }catch(e){}
+  updateSleepPrev(); $("modal").classList.add("show");
+}
+$("sFrom").oninput = $("sTo").oninput = updateSleepPrev;
+$("sCancel").onclick = () => $("modal").classList.remove("show");
+$("modal").onclick = e => { if(e.target.id==="modal") $("modal").classList.remove("show"); };
+$("sOk").onclick = () => {
+  const from = $("sFrom").value, to = $("sTo").value, r = sleepPts(from, to);
+  if(!r) return;
+  try{ localStorage.setItem("sFrom", from); localStorage.setItem("sTo", to); }catch(e){}
+  $("modal").classList.remove("show");
+  act("sleep", {delta:r.pts, note:`${from}-${to}`, from, to});
+};
+
+function setPlace(p){
+  place = p;
+  $("pHome").classList.toggle("on", p==="home");
+  $("pOffice").classList.toggle("on", p==="office");
+  try{ localStorage.setItem("place", p); }catch(e){}
+  buildSatellites();
+}
+
+$("pHome").onclick = () => setPlace("home");
+$("pOffice").onclick = () => setPlace("office");
+$("undo").onclick = undo;
+$("date").textContent = new Date().toLocaleDateString("vi-VN",{weekday:"long",day:"numeric",month:"numeric"});
+
+(async function init(){
+  try{ place = localStorage.getItem("place") || "home"; }catch(e){}
+  setPlace(place);
+  if(!API_URL){ state = localLoad(); setStatus("Chế độ thử: chưa nối Google Sheet"); render(); return; }
+  setStatus("Đang tải…"); render();
+  try{ state = await api(); render(); setStatus(""); }
+  catch(e){ setStatus("Không tải được dữ liệu"); }
+})();
+</script>
+</body>
+</html>
